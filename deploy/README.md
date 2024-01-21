@@ -47,5 +47,5 @@ kubectl apply -f ingress.yml
 
 kubectl get all
 kubectl get ingress
-kubectl get svc
+kubectl get svc -A
 ```
