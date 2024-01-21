@@ -39,6 +39,11 @@ Install [Ingress Nginx Controller](https://kubernetes.github.io/ingress-nginx/)
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
 ```
 
+On Bare metal clusters or VM
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/baremetal/deploy.yaml
+```
+
 Deploy .NET C#
 ```
 cd k8s/
@@ -49,3 +54,4 @@ kubectl get all
 kubectl get ingress
 kubectl get svc -A
 ```
+http://206.189.35.65:30862/service1/weatherforecast
