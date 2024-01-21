@@ -1,0 +1,15 @@
+version: "3"
+services:
+  angular:
+    build:
+      context: ./demo-angular
+      dockerfile: Dockerfile
+    ports:
+      - 8888:80
+  
+  api:
+    build:
+      context: ./demo-dotnet
+      dockerfile: Dockerfile
+    # ports:
+    #   - 8080:8080
