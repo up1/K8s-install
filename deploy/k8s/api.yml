@@ -28,6 +28,6 @@ spec:
     spec:
       containers:
       - name: api
-        image: somkiat/demo-dotnet:1.0
+        image: somkiat/demo-dotnet:2.0
         ports:
         - containerPort: 8080
