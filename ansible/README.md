@@ -1,4 +1,5 @@
 # Create Kubernetes cluster with Ansible
+* [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
 ## Install software
 ```
