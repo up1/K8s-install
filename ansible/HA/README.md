@@ -5,6 +5,7 @@
 
 ## ETCD :: What is failure tolerance?
 * https://etcd.io/docs/v3.2/faq/#what-is-failure-tolerance
+* [Monitoring ETCD](https://etcd.io/docs/v3.5/op-guide/monitoring/)
 
 ## Download and install Kubespray
 ```
