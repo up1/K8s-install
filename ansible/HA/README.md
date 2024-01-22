@@ -1,6 +1,7 @@
 # Deploy K8s cluster
 * [Kubespray](https://github.com/kubernetes-sigs/kubespray)
-* Python 3
+    * Python 3
+    * Ansible
 
 ## ETCD :: What is failure tolerance?
 * https://etcd.io/docs/v3.2/faq/#what-is-failure-tolerance
