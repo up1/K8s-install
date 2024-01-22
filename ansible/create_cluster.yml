@@ -1,0 +1,49 @@
+---
+- hosts: master
+  vars_files:
+    - ansible-vars.yml
+  become: true
+  remote_user: "{{ username }}"
+  tasks:
+    - name: Reset cluster
+      command: kubeadm reset -f
+
+    - name: Initialize the Kubernetes cluster
+      command: kubeadm init --pod-network-cidr={{ pod_cidr }}
+      register: kube_init_output
+
+    - name: Save kubeadm join command for cluster
+      local_action: copy content={{ kube_init_output.stdout }} dest={{ join_command_location }} # defaults to your local cwd/join_command.out
+      become: false
+    
+    - name: Create .kube directory in the home directory
+      file:
+        path: "{{ ansible_env.HOME }}/.kube"
+        state: directory
+
+    - name: Copy /etc/kubernetes/admin.conf to .kube/config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ ansible_env.HOME }}/.kube/config"
+        remote_src: yes
+      become: true
+
+    - name: Change owner of .kube/config to the current user
+      file:
+        path: "{{ ansible_env.HOME }}/.kube/config"
+        owner: "{{ ansible_env.USER }}"
+        group: "{{ ansible_env.USER }}"
+      become: true
+
+    - name: Apply calico
+      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+      become: true
+
+- hosts: worker
+  vars_files:
+    - ansible-vars.yml
+  become: true
+  remote_user: "{{ username }}"
+  tasks:
+    - name: Reset cluster
+      command: kubeadm reset -f

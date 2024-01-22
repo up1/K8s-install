@@ -1,0 +1,22 @@
+---
+- hosts: worker
+  become: true
+  vars_files:
+    - ansible-vars.yml
+  remote_user: "{{ username }}"
+  vars:
+    join_command: "{{ hostvars['master']['join_command'] }}"
+  tasks:
+    - name: Reset cluster
+      command: kubeadm reset -f
+
+    - name: Read join command from local file
+      set_fact:
+        data: "{{ lookup('file', join_command_location) }}"
+      
+    - name: Show join command
+      debug:
+        var: "{{ data.split('\n')[-2:] | join('') | replace('\\\t', '') | trim }}"
+        
+    - name: Join worker to cluster
+      command: "{{ data.split('\n')[-2:] | join('') | replace('\\\t', '') | trim }}"

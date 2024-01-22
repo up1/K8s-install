@@ -1,0 +1,136 @@
+---
+- hosts: all
+  vars_files:
+    - ansible-vars.yml
+  become: true
+  remote_user: "{{ username }}"
+  tasks:
+    - name: Disable swap temporarily
+      command: swapoff -a
+      become: true
+
+    - name: Disable swap permanently
+      lineinfile:
+        path: /etc/fstab
+        regexp: '^(.*swap.*)$'
+        line: '#\1'
+        backrefs: yes
+      become: true
+
+    - name: Create /etc/modules-load.d/containerd.conf
+      copy:
+        dest: /etc/modules-load.d/containerd.conf
+        content: |
+          overlay
+          br_netfilter
+      become: true
+
+    - name: Load overlay module
+      command: modprobe overlay
+      become: true
+
+    - name: Load br_netfilter module
+      command: modprobe br_netfilter
+      become: true
+
+    - name: Create /etc/sysctl.d/kubernetes.conf
+      copy:
+        dest: /etc/sysctl.d/kubernetes.conf
+        content: |
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.bridge.bridge-nf-call-iptables = 1
+          net.ipv4.ip_forward = 1
+      become: true
+
+    - name: Apply sysctl settings
+      command: sysctl --system
+      become: true
+
+    - name: Update packages
+      apt:
+        update_cache: yes
+      become: true
+
+    - name: Install required packages
+      apt:
+        name: ['ca-certificates', 'curl', 'gnupg']
+        state: present
+      become: true
+
+    - name: Create /etc/apt/keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add repository into sources list
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+        state: present
+        filename: docker-ce
+
+    - name: Update packages
+      apt:
+        update_cache: yes
+      become: true
+
+    - name: Install Docker and related packages
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-buildx-plugin', 'docker-compose-plugin']
+        state: present
+      become: true
+
+    - name: Add Kubernetes apt-key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+      become: true
+
+    - name: Add Kubernetes apt repository
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+      become: true
+
+    - name: Configure containerd
+      shell: |
+        containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+        sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+    - name: Update packages
+      apt:
+        update_cache: yes
+
+    - name: Install Kubernetes admin packages
+      apt:
+        name: ['kubeadm']
+        state: present
+        update_cache: yes
+    
+    - name: Set KUBELET_EXTRA_ARGS
+      copy:
+        content: "KUBELET_EXTRA_ARGS=--node-ip={{ ansible_default_ipv4.address }}"
+        dest: /etc/default/kubelet
+      become: true
+
+    - name: Reload systemd manager configuration
+      command: systemctl daemon-reload
+      become: true
+
+    - name: Restart kubelet
+      systemd:
+        name: kubelet
+        state: restarted
+      become: true
+
+    - name: Restart containerd
+      systemd:
+        name: containerd
+        state: restarted
+      become: true
